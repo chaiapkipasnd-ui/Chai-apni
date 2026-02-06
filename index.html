@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <title>Untitled</title>
+    
+
+  </head>
+    
+  <body>
+  <!DOCTYPE html>
+
+<html lang="hi">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Chai Apki Pasand</title>
+
+<style>
+
+body{font-family:Arial;margin:0;background:#fff7ec}
+
+header{background:#2e7d32;color:#fff;padding:15px;text-align:center}
+
+h3{margin:10px;color:#2e7d32}
+
+.menu{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;padding:10px}
+
+.card{background:#fff;padding:10px;border-radius:10px;text-align:center;box-shadow:0 0 5px #ccc}
+
+.card img{width:100%;height:110px;object-fit:cover;border-radius:8px}
+
+.btn{background:#ff9800;color:#fff;border:none;padding:6px 14px;border-radius:20px;cursor:pointer}
+
+input,select{width:100%;padding:7px;margin:4px 0}
+
+table{width:95%;margin:10px auto;border-collapse:collapse;background:#fff}
+
+th,td{border:1px solid #ccc;padding:6px;text-align:center}
+
+.cart,.admin,.custom{padding:10px}
+
+.whatsapp{background:#25D366;color:#fff;width:100%;padding:12px;border:none;border-radius:30px;font-size:18px}
+
+</style>
+
+</head>
+
+<body>
+
+<header>
+
+<h2>☕ Chai Apki Pasand</h2>
+
+<p>Single File Order System</p>
+
+</header>
+
+<!-- ================= CUSTOMER DETAILS ================= -->
+
+<div class="custom">
+
+<h3>👤 Customer Details</h3>
+
+<input id="custName" placeholder="Customer Name">
+
+<input id="custPhone" placeholder="Mobile Number">
+
+<input id="custAddress" placeholder="Address">
+
+</div>
+
+<!-- ================= MENU ================= -->
+
+<div id="menuContainer"></div>
+
+<!-- ================= CART ================= -->
+
+<div class="cart">
+
+<h3>🛒 Order</h3>
+
+<div id="orderList"></div>
+
+<button class="whatsapp" onclick="sendOrder()">📲 WhatsApp Order</button>
+
+</div>
+
+<hr>
+
+<!-- ================= OWNER LOGIN ================= -->
+
+<div class="admin" id="loginBox">
+
+<h3>🔐 Owner Login</h3>
+
+<input id="user" placeholder="Username" autocomplete="username">
+
+<input id="pass" type="password" placeholder="Password" autocomplete="current-password">
+
+<button class="btn" onclick="login()">Login</button>
+
+<p id="err" style="color:red"></p>
+
+</div>
+
+<!-- ================= ADMIN PANEL ================= -->
+
+<div class="admin" id="panel" style="display:none">
+
+<h3>➕ Add Category</h3>
+
+<input id="newCat" placeholder="Category Name">
+
+<button class="btn" onclick="addCategory()">Add Category</button>
+
+<h3>📦 Add Item</h3>
+
+<select id="cat"></select>
+
+<input id="iname" placeholder="Item Name">
+
+<input id="iprice" type="number" placeholder="Price ₹">
+
+<input id="iimg" type="file" accept="image/*">
+
+<button class="btn" onclick="addItem()">Add Item</button>
+
+<h3>📋 Items List</h3>
+
+<table id="itemTable"></table>
+
+</div>
+
+<script>
+
+/* ========== OWNER LOGIN ========== */
+
+const OWNER_USER="Akk";
+
+const OWNER_PASS="Aku@#123";
+
+/* ========== DATA ========== */
+
+let categories = JSON.parse(localStorage.getItem("categories") || '["Chai"]');
+
+let items = JSON.parse(localStorage.getItem("items") || "[]");
+
+let order=[];
+
+/* ========== LOGIN ========== */
+
+function login(){
+
+ if(user.value===OWNER_USER && pass.value===OWNER_PASS){
+
+  loginBox.style.display="none";
+
+  panel.style.display="block";
+
+  err.innerText="";
+
+  renderCategories();
+
+  renderItemsTable();
+
+ }else err.innerText="Wrong Username or Password";
+
+}
+
+/* ========== CATEGORY ========== */
+
+function renderCategories(){
+
+ cat.innerHTML="";
+
+ categories.forEach(c=>{
+
+  let o=document.createElement("option");
+
+  o.text=o.value=c;
+
+  cat.appendChild(o);
+
+ });
+
+ renderMenu();
+
+}
+
+function addCategory(){
+
+ let c=newCat.value.trim();
+
+ if(!c || categories.includes(c)) return;
+
+ categories.push(c);
+
+ localStorage.setItem("categories",JSON.stringify(categories));
+
+ newCat.value="";
+
+ renderCategories();
+
+}
+
+/* ========== ITEM ADD WITH PHOTO ========== */
+
+function addItem(){
+
+ if(!iname.value||!iprice.value||!iimg.files[0]) return alert("All fields required");
+
+ let r=new FileReader();
+
+ r.onload=()=>{
+
+  items.push({
+
+    cat:cat.value,
+
+    name:iname.value,
+
+    price:+iprice.value,
+
+    img:r.result
+
+  });
+
+  localStorage.setItem("items",JSON.stringify(items));
+
+  iname.value=iprice.value=iimg.value="";
+
+  renderMenu();
+
+  renderItemsTable();
+
+ };
+
+ r.readAsDataURL(iimg.files[0]);
+
+}
+
+/* ========== MENU ========== */
+
+function renderMenu(){
+
+ let h="";
+
+ categories.forEach(c=>{
+
+  let list=items.filter(i=>i.cat===c);
+
+  if(list.length){
+
+   h+=`<h3>${c}</h3><div class="menu">`;
+
+   list.forEach(i=>{
+
+    h+=`<div class="card">
+
+      <img src="${i.img}">
+
+      <b>${i.name}</b><br>₹${i.price}<br>
+
+      <button class="btn" onclick="addToOrder('${i.name}',${i.price})">Add</button>
+
+    </div>`;
+
+   });
+
+   h+="</div>";
+
+  }
+
+ });
+
+ menuContainer.innerHTML=h;
+
+}
+
+/* ========== CART ========== */
+
+function addToOrder(n,p){
+
+ let f=order.find(o=>o.name===n);
+
+ if(f) f.qty++;
+
+ else order.push({name:n,price:p,qty:1});
+
+ renderOrder();
+
+}
+
+function renderOrder(){
+
+ orderList.innerHTML=order.map(i=>`${i.name} x ${i.qty} = ₹${i.price*i.qty}`).join("<br>");
+
+}
+
+/* ========== SEND ORDER ========== */
+
+function sendOrder(){
+
+ if(!custName.value||!custPhone.value||order.length===0){
+
+  alert("Customer details & items required"); return;
+
+ }
+
+ let total=order.reduce((s,i)=>s+i.price*i.qty,0);
+
+ let msg=`☕ Chai Apki Pasand%0AName:${custName.value}%0APhone:${custPhone.value}%0A`+
+
+ order.map(i=>`${i.name} x ${i.qty}`).join("%0A")+`%0ATotal ₹${total}`;
+
+ window.open("https://wa.me/919720226530?text="+msg);
+
+ order=[]; renderOrder();
+
+ custName.value=custPhone.value=custAddress.value="";
+
+}
+
+/* ========== ADMIN ITEM TABLE ========== */
+
+function renderItemsTable(){
+
+ itemTable.innerHTML="<tr><th>Category</th><th>Item</th><th>Price</th></tr>"+
+
+ items.map(i=>`<tr><td>${i.cat}</td><td>${i.name}</td><td>${i.price}</td></tr>`).join("");
+
+}
+
+/* INIT */
+
+renderCategories();
+
+</script>
+
+</body>
+
+</html>
+    
+  </body>
+  
+</html>
